@@ -49,13 +49,20 @@ echo "sdk.dir=$HOME/Android/Sdk" > local.properties
 Then:
 
 ```bash
-./gradlew assembleDebug                  # debug APK (auto-bumps patch version)
+./gradlew assembleDebug                  # debug APK (auto-bumps patch; arm64 only)
 ./gradlew installDebug                   # build and install on a connected device
-./gradlew assembleRelease                # release APK (unsigned)
+./gradlew assembleRelease                # release APK, all ABIs (unsigned)
+./gradlew assembleDebug -PallAbis        # debug APK with every ABI
+./gradlew assembleDebug -Pabis=x86_64    # debug APK for an x86_64 emulator
 ```
 
-The APK lands in `app/build/outputs/apk/`. Three ABIs are built: `arm64-v8a`,
-`armeabi-v7a` and `x86_64` (the last one so it runs on an emulator).
+APKs land in `app/build/outputs/apk/<buildType>/` as
+`GuitarSalmon-<version>-<buildType>.apk` (for example
+`GuitarSalmon-1.0.1-debug.apk`).
+
+Debug builds compile **arm64-v8a only** by default so the NDK/CMake step stays
+fast; release and full `build` still package `arm64-v8a`, `armeabi-v7a` and
+`x86_64`.
 
 ### Versioning
 

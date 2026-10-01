@@ -9,3 +9,7 @@ captures/
 .cxx/
 *.apk
 *.aab
+app/build/
+app/release/
+app/debug/
+app/release/

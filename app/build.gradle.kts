@@ -4,11 +4,43 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+import com.android.build.gradle.internal.api.BaseVariantOutputImpl
 import com.guitarsalmon.gradle.AppVersioning
 
 // Resolve (and, for assemble/install/bundle, auto-bump) the semantic version before
 // the Android plugin stamps versionCode / versionName into the APK.
 val appVersion = AppVersioning.resolve(project)
+
+/**
+ * ABIs to compile into this build.
+ *
+ * Debug / day-to-day builds default to arm64-v8a only: cutting two of the three
+ * NDK targets is the largest win on this project. Release and full `build` still
+ * ship every ABI. Override with `-PallAbis` or `-Pabis=arm64-v8a,x86_64`.
+ */
+fun Project.selectedAbis(): List<String> {
+    if (hasProperty("allAbis")) {
+        return listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+    }
+    findProperty("abis")?.toString()?.takeIf { it.isNotBlank() }?.let { raw ->
+        return raw.split(',').map { it.trim() }.filter { it.isNotEmpty() }
+    }
+
+    val tasks = gradle.startParameter.taskNames.map { it.substringAfterLast(':').lowercase() }
+    val wantsEveryAbi = tasks.any { name ->
+        name == "build" ||
+            name.contains("release") ||
+            name.startsWith("bundle")
+    }
+    return if (wantsEveryAbi) {
+        listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+    } else {
+        listOf("arm64-v8a")
+    }
+}
+
+val buildAbis = selectedAbis()
+logger.lifecycle("GuitarSalmon ABIs -> ${buildAbis.joinToString()}")
 
 android {
     namespace = "com.guitarsalmon"
@@ -36,7 +68,8 @@ android {
         }
 
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+            abiFilters.clear()
+            abiFilters += buildAbis
         }
     }
 
@@ -62,6 +95,8 @@ android {
         compose = true
         // Required so CMake can `find_package(oboe)` from the Oboe AAR.
         prefab = true
+        // No BuildConfig / unused resource path work for this app.
+        buildConfig = false
     }
 
     composeOptions {
@@ -79,6 +114,18 @@ android {
 
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        // Keep packaged .so files uncompressed so install / update is faster and the
+        // loader can mmap them directly.
+        jniLibs.useLegacyPackaging = false
+    }
+}
+
+// Name APKs GuitarSalmon-<version>-<variant>.apk (e.g. GuitarSalmon-1.0.1-debug.apk).
+android.applicationVariants.configureEach {
+    val variantName = name
+    outputs.configureEach {
+        val output = this as BaseVariantOutputImpl
+        output.outputFileName = "GuitarSalmon-${appVersion.name}-$variantName.apk"
     }
 }
 
