@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive icon foreground: a guitar soundhole with strings crossing it.
+     108x108 canvas with the artwork kept inside the central 72dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Soundhole ring -->
+    <path
+        android:fillColor="#FFF4A26B"
+        android:pathData="M54,28a26,26 0 1,0 0,52a26,26 0 1,0 0,-52zM54,36a18,18 0 1,1 0,36a18,18 0 1,1 0,-36z" />
+
+    <!-- Strings -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M34,48h40v2.5h-40zM34,56h40v2.5h-40z" />
+</vector>
